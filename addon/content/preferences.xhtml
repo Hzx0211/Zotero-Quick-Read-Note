@@ -1,0 +1,34 @@
+<html:style>
+  .quickread-grid { display: grid; grid-template-columns: 140px minmax(300px,
+  1fr); gap: 8px 12px; align-items: start; } .quickread-grid html\:input,
+  .quickread-grid html\:textarea { width: 100%; box-sizing: border-box; font:
+  inherit; } .quickread-grid html\:textarea { min-height: 110px; resize:
+  vertical; } .quickread-help { margin: 8px 0 14px; opacity: .8; }
+</html:style>
+<groupbox
+  onload="Zotero.__addonInstance__.hooks.onPrefsEvent('load', { window })"
+>
+  <label><html:h2>Zotero Quick Read Note</html:h2></label>
+  <html:p class="quickread-help"
+    >API Key 仅保存在本机 Zotero 配置中。生成时会将文献信息及可用的 PDF
+    文本发送到配置的 API 地址。</html:p
+  >
+  <html:div class="quickread-grid">
+    <html:label for="quickread-baseURL">API Base URL</html:label>
+    <html:input
+      id="quickread-baseURL"
+      type="url"
+      placeholder="https://api.openai.com/v1"
+    />
+    <html:label for="quickread-apiKey">API Key</html:label>
+    <html:input id="quickread-apiKey" type="password" autocomplete="off" />
+    <html:label for="quickread-model">Model</html:label>
+    <html:input id="quickread-model" type="text" placeholder="例如 gpt-5.6" />
+    <html:label for="quickread-analysisPrompt">Analysis Prompt</html:label>
+    <html:textarea id="quickread-analysisPrompt" rows="8"></html:textarea>
+    <html:label for="quickread-researchContext">Research Context</html:label>
+    <html:textarea id="quickread-researchContext" rows="5"></html:textarea>
+    <html:label for="quickread-noteTemplate">Markdown Note Template</html:label>
+    <html:textarea id="quickread-noteTemplate" rows="15"></html:textarea>
+  </html:div>
+</groupbox>

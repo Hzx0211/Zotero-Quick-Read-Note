@@ -1,0 +1,4 @@
+Quick Read PDF Integration Test
+
+This paper studies how researchers organize Zotero notes.
+The sample includes twelve fictional articles.
