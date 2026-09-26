@@ -1,44 +1,84 @@
-# Zotero Quick Read Note
+<p align="center">
+  <img src="logo.png" alt="Zotero Quick Read Note logo" width="170" />
+</p>
 
-**使用说明 / User guides:** [简体中文](docs/USAGE.zh-CN.md) · [English](docs/USAGE.en.md)
+<h1 align="center">Zotero Quick Read Note</h1>
 
-用于 Zotero 10 的原生插件。在文献条目上右键选择「快速添加粗读笔记」，插件读取元数据和 PDF 的 Zotero 全文索引文本，调用 OpenAI-compatible Chat Completions API，然后把 Markdown 结果转换为 HTML，在原文献下创建 child note。
+<p align="center">
+  <strong>一篇论文，先有一张地图。</strong><br />
+  在 Zotero 里右键文献，把 PDF 或摘要变成一份可继续修改的粗读子笔记。<br />
+  <em>One right-click from a Zotero paper to an editable quick-read child note.</em>
+</p>
 
-## 工程结构
+<p align="center">
+  <a href="https://github.com/Hzx0211/Zotero-Quick-Read-Note/releases/latest/download/zotero-quick-read-note.xpi">下载插件 XPI</a>
+  · <a href="docs/USAGE.zh-CN.md">中文使用说明</a>
+  · <a href="docs/USAGE.en.md">English user guide</a>
+</p>
 
-```text
-addon/                    Zotero bootstrap、manifest、默认偏好和 Preferences 页面
-src/modules/menu.ts       右键菜单、状态提示、完整生成流程
-src/modules/preferences.ts Preferences 注册与字段保存
-src/services/ZoteroItemService.ts 选择校验、元数据、PDF 附件定位
-src/services/PDFTextService.ts    Zotero PDF 全文缓存读取与长度限制
-src/services/PromptService.ts     Analysis Prompt、研究方向、元数据、正文和模板组合
-src/services/LLMService.ts        Chat Completions HTTP 请求与响应校验
-src/services/NoteService.ts       Markdown 转 HTML、child note 创建
-src/services/PreferenceService.ts 插件本地设置读取和写入
-test/                    Zotero 10 集成测试及小型 PDF 样本
+## 它做什么？
+
+**选中一篇文献 → 右键「快速添加粗读笔记」→ 在原文献下得到一条子笔记。**
+
+插件读取文献的标题、作者、摘要等信息，并优先使用 Zotero 已提取的 PDF 文本。然后，它把这些内容连同你设置的分析 Prompt、研究方向和 Markdown 模板发给 OpenAI-compatible Chat Completions 服务，最后将模型返回的 Markdown 转成 Zotero 笔记可显示的格式。
+
+| 你在 Zotero 中做什么         | 插件会做什么                                             |
+| ---------------------------- | -------------------------------------------------------- |
+| 设置 API、分析要求和笔记模板 | 保存设置，生成时按你的要求构造请求                       |
+| 右键一篇文献                 | 读取元数据和 PDF 文本；没有 PDF 时使用摘要，并调用模型   |
+| 等待生成完成                 | 把模型返回的 Markdown 转为格式化笔记，挂在原文献条目下面 |
+
+## 一分钟上手
+
+1. 下载 [最新 XPI 安装包](https://github.com/Hzx0211/Zotero-Quick-Read-Note/releases/latest/download/zotero-quick-read-note.xpi)。在 **Zotero 10 → 工具 → 插件** 中拖入 XPI 安装。
+2. 打开 Zotero 设置侧栏的 **Zotero Quick Read Note**，填入 API Base URL、API Key 和 Model。按需修改 Analysis Prompt、Research Context 和 Markdown Note Template。
+3. 回到文献库，右键**一篇普通文献条目**，选择 **快速添加粗读笔记**。等待完成后，展开文献即可看到子笔记。
+
+详细操作、字段说明和排错方法见 [中文使用说明](docs/USAGE.zh-CN.md) / [English user guide](docs/USAGE.en.md)。
+
+## 笔记的样子由你定
+
+Markdown Note Template 是可编辑的。例如，你可以只保留自己关心的章节：
+
+```markdown
+# 研究问题
+
+# 研究方法
+
+# 主要发现
+
+# 与我的研究方向相关
 ```
 
-工程基于 [zotero-plugin-template](https://github.com/windingwind/zotero-plugin-template)，使用 TypeScript、`zotero-plugin-toolkit`、`zotero-types` 和 `markdown-it`。源码许可证为 AGPL-3.0-or-later。
+你也可以增删章节、改标题、调整标题层级。插件会把整个模板交给模型，要求它照此生成。模板目前是**格式指令**，不是 `{{...}}` 占位符替换语法；生成后仍建议检查模型是否遵循格式。
 
-## Preferences
+## 使用前知道这些
 
-在 Zotero 设置侧栏打开 **Zotero Quick Read Note**：
+- **PDF 文本来自 Zotero。** 插件不做 OCR；扫描件或没有文本层的 PDF 可能无法读取。没有 PDF 时会提示摘要模式。
+- **长文会截断。** 目前最多向模型发送 PDF 前 80,000 个字符，因此笔记可能不覆盖论文后半部分。
+- **内容会发往你配置的 API。** API Key 以明文保存在本机 Zotero preferences 中；文献元数据、摘要和可用 PDF 文本会发给你选择的服务商。
+- **粗读不是事实核查。** 请对照原文检查模型生成的事实与引用。
+- **当前支持 Zotero 10。** 每次处理一篇文献，只支持 OpenAI-compatible Chat Completions 文本响应；更新插件需手动安装新版 XPI。
 
-| 字段                   | 作用                                                                                                                                              |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| API Base URL           | Chat Completions 的根地址，例如 `https://api.openai.com/v1`；插件追加 `/chat/completions`。远程地址必须使用 HTTPS，本机 `localhost` 可使用 HTTP。 |
-| API Key                | Bearer 鉴权密钥。保存在本机 Zotero preferences 中，不写入源码或笔记。                                                                             |
-| Model                  | 发送给 API 的模型名称。                                                                                                                           |
-| Analysis Prompt        | 作为 system 指令，约束论文事实来源和写作方式。                                                                                                    |
-| Research Context       | 你的研究方向，供模型填写相关性部分；可以留空。                                                                                                    |
-| Markdown Note Template | 整个模板原样发送给模型，可自由增删标题和改变层级。                                                                                                |
+<details>
+<summary>开发者：项目结构、运行与构建</summary>
 
-API Key 是 Zotero 本地 preference 的明文值，不经过 Zotero 文献同步。请使用受信任的 API 地址和本机用户账户。文献元数据、摘要或 PDF 文本会发送到该地址。
+项目基于 [zotero-plugin-template](https://github.com/windingwind/zotero-plugin-template)，使用 TypeScript、`zotero-plugin-toolkit`、`zotero-types` 和 `markdown-it`。
 
-## 开发与构建
+```text
+addon/                           Zotero manifest、bootstrap、偏好设置页面
+src/modules/menu.ts              右键菜单、状态提示与生成流程
+src/modules/preferences.ts       设置页注册与输入绑定
+src/services/ZoteroItemService.ts 文献校验、元数据和 PDF 附件定位
+src/services/PDFTextService.ts   Zotero PDF 文本读取与长度限制
+src/services/PromptService.ts    Prompt 组合
+src/services/LLMService.ts       Chat Completions 请求与响应校验
+src/services/NoteService.ts      Markdown 转 HTML、创建子笔记
+src/services/PreferenceService.ts 本地设置读写
+test/                           Zotero 10 集成测试与 PDF 样本
+```
 
-要求：Zotero 10、Node.js、npm。本机已用 Zotero 10.0.3 验证加载；集成测试中运行的 Zotero 报告版本为 10.0.4。
+要求：Zotero 10、Node.js、npm。开发环境可按下列命令启动：
 
 ```bash
 npm install --allow-git=all
@@ -46,30 +86,13 @@ cp .env.example .env
 npm start
 ```
 
-模板依赖的 `zotero-types` 包含 Git 源依赖；npm 12 需显式使用 `--allow-git=all`。编辑 `.env` 中的 Zotero 可执行文件路径，并给开发用的 profile 和 data directory 使用独立路径。`npm start` 会编译并在开发 Zotero 实例中临时加载插件，修改源码后自动重载。首次启动可能需要等待 Zotero 初始化。
-
-运行检查与生产构建：
+将 `.env` 中的 Zotero 可执行文件路径改为本机路径，并使用独立的开发 profile 和 data directory。`npm start` 会编译并在开发用 Zotero 中临时加载插件。npm 12 安装 Git 源依赖时需使用 `--allow-git=all`。
 
 ```bash
 npm run lint:check
 npm run build
 ```
 
-生成的可安装文件位于 `.scaffold/build/zotero-quick-read-note.xpi`。`npm test` 使用单独的 `.scaffold/test` Zotero 配置和本机模拟 LLM 服务；测试输出完成后可按 `Ctrl-C` 结束测试服务器。测试验证菜单、Preferences、摘要模式、真实 PDF 全文提取、Chat Completions 请求，以及从菜单到 child note 的完整模拟链路。
+构建产物：`.scaffold/build/zotero-quick-read-note.xpi`。`npm test` 使用独立的 Zotero 测试配置和本机模拟 LLM 服务。源码采用 [AGPL-3.0-or-later](LICENSE) 许可证。
 
-## 安装与验收
-
-1. 在 Zotero 10 中打开 **工具 → 插件**，将 `.xpi` 拖入插件窗口安装。参见 [Zotero 插件安装说明](https://www.zotero.org/support/plugins)。
-2. 打开 Zotero 设置，选择 **Zotero Quick Read Note**，填写 API Base URL、API Key、Model，并按需修改 Analysis Prompt、Research Context 和 Markdown Note Template。
-3. 回到文献库，选择一篇带 PDF 的文献条目，右键点击「快速添加粗读笔记」。
-4. 等待「正在生成粗读笔记……」变为「粗读笔记已生成」。展开文献条目，检查新建的 child note 及其标题、列表、粗体和斜体格式。
-5. 可再选一篇无 PDF 但有摘要的文献验证摘要模式。插件会显示「未找到 PDF，正在使用摘要模式……」。
-
-## 当前限制
-
-- 每次仅处理一篇 bibliographic item；如有多个 PDF 附件，使用第一个。
-- 使用 Zotero 的 PDF 文本提取和全文缓存，不做 OCR。扫描件可能无法产生文本。
-- PDF 文本最多发送前 80,000 个字符，并在 Prompt 中声明截断。上下文较小的模型可能仍需调低 `src/services/PDFTextService.ts` 中的限制。
-- 仅支持 OpenAI-compatible Chat Completions 文本响应。不同服务商可能有额外参数或不同的响应格式。
-- 模型输出仍需人工核对论文事实。真实服务商请求需要用户填入自己的密钥后验收；自动测试使用本机模拟服务，不会联系外部 LLM。
-- XPI 目前用于手动安装；清单中的更新地址是无效占位地址，不提供自动更新。
+</details>
