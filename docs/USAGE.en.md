@@ -30,7 +30,7 @@ After editing a field, move focus away from it to save the value in local Zotero
 
 **Infer from files** accepts up to five local PDF, DOCX, or UTF-8 TXT files. The plugin extracts text locally and sends only that text to the selected API provider; it does not upload the original files or add them to the Zotero library. Each file is limited to 20 MB; PDF extraction covers the first 20 pages; text is limited to 10,000 characters per file and 40,000 in total. Truncation is reported. Scanned PDFs need OCR, and encrypted or textless files cannot be used. Inference makes one separate model request and may incur a charge. Its Chinese result appears in an editable preview and replaces the saved Research Context only when you select Apply. Later note generation uses the saved value.
 
-**Auto-generate after import** is off by default. When enabled, each newly added bibliographic item calls your configured API and may incur a charge.
+**Auto-generate after import** is off by default. When enabled, each newly added bibliographic item calls your configured API and may incur a charge. A new item first waits up to **Wait for PDF attachment (minutes)** (default 10, adjustable in the pane) for its PDF attachment and file to become available, because import tools such as PaperHunter or the Zotero Connector often save the item before downloading the PDF. Once the PDF is ready the note is generated from the full text; if the wait ends without a PDF, an item with an abstract falls back to abstract mode, and an item without an abstract is skipped (you can right-click to generate a note later).
 
 The template is a formatting instruction for the model. The plugin does not substitute placeholders such as `{{...}}`. Review the output because the model may not follow the template perfectly.
 
@@ -45,7 +45,7 @@ Card, flow, and table rendering run locally without an additional AI request. Th
 
 With a PDF, the plugin uses text extracted or indexed by Zotero. Without a PDF, it shows an abstract-mode message and generates from metadata and the abstract. If there is no abstract either, the model has only metadata. Each manual right-click processes one item; if an item has multiple PDFs, the first is used.
 
-When auto-generation is enabled, newly added bibliographic items (including imports, Connector additions, and newly synced items) are processed after a short wait for PDF attachments. If no PDF is available then, the plugin uses abstract mode. Existing items are not backfilled. The plugin will not automatically create a second note if it already created one for that item. Batch imports are processed with limited concurrency. Turning the option off stops future additions from being processed. Manual generation remains available.
+When auto-generation is enabled, newly added bibliographic items (including imports, Connector additions, and newly synced items) are watched: after a short settle delay the plugin waits for the PDF attachment and its file body (up to the configured number of minutes), and only then runs the generation with the current settings. Items whose wait ends without a PDF are generated in abstract mode when they have an abstract, or skipped otherwise. Existing items are not backfilled. The plugin will not automatically create a second note if it already created one for that item. Batch imports are processed with limited concurrency. Turning the option off stops future additions from being processed. Manual generation remains available.
 
 ## Troubleshooting and limits
 

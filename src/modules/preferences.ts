@@ -3,6 +3,7 @@ import {
   setAutoGenerate,
   setCustomProtocol,
   setNoteStyle,
+  setPdfWaitMinutes,
   setProvider,
   setSetting,
   type ApiProtocol,
@@ -244,5 +245,17 @@ export function bindPreferenceInputs(win: Window): void {
     checkbox.addEventListener("change", () =>
       setAutoGenerate(checkbox.checked),
     );
+  }
+
+  const pdfWait = document.getElementById(
+    "quickread-autoGeneratePdfWaitMinutes",
+  ) as HTMLInputElement | null;
+  if (pdfWait) {
+    pdfWait.value = String(values.autoGeneratePdfWaitMinutes);
+    pdfWait.addEventListener("change", () => {
+      const minutes = Number.parseInt(pdfWait.value, 10);
+      setPdfWaitMinutes(minutes);
+      pdfWait.value = String(getSettings().autoGeneratePdfWaitMinutes);
+    });
   }
 }

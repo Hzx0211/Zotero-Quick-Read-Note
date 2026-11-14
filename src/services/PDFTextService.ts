@@ -10,6 +10,24 @@ export type PaperContent = {
   truncated: boolean;
 };
 
+/**
+ * Whether the item already carries a PDF attachment whose file body has been
+ * stored locally. Importers (PaperHunter, Zotero Connector, sync) often create
+ * the attachment item first and stream the file body in afterwards; until the
+ * file exists there is nothing to extract, so auto generation must wait.
+ */
+export async function pdfFileAvailable(item: Zotero.Item): Promise<boolean> {
+  const pdf = getPDFAttachment(item);
+  if (!pdf) return false;
+  const path = await pdf.getFilePathAsync();
+  if (!path) return false;
+  try {
+    return Zotero.File.pathToFile(path).exists();
+  } catch {
+    return false;
+  }
+}
+
 export async function getPaperContent(
   item: Zotero.Item,
   abstractNote: string,

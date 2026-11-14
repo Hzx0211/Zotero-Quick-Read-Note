@@ -66,6 +66,7 @@ export type Settings = ProviderProfile & {
   providerId: ProviderId;
   protocol: ApiProtocol;
   autoGenerate: boolean;
+  autoGeneratePdfWaitMinutes: number;
   noteStyle: NoteStyle;
   analysisPrompt: string;
   researchContext: string;
@@ -129,6 +130,9 @@ export function getSettings(): Settings {
         : PROVIDER_PRESETS[providerId].protocol,
     ...getProfile(providerId),
     autoGenerate: getPref("autoGenerate"),
+    autoGeneratePdfWaitMinutes: normalizePdfWaitMinutes(
+      getPref("autoGeneratePdfWaitMinutes"),
+    ),
     noteStyle:
       getPref("noteStyle") === "classic"
         ? "classic"
@@ -172,6 +176,20 @@ export function setSetting(key: TextSettingKey, value: string): void {
 
 export function setAutoGenerate(value: boolean): void {
   setPref("autoGenerate", value);
+}
+
+/**
+ * Minutes a newly added item may wait for a PDF attachment before auto
+ * generation falls back to abstract mode. 0 keeps only the short settle
+ * delay. Non-numbers and negatives fall back to the 10-minute default.
+ */
+function normalizePdfWaitMinutes(value: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 10;
+  return value < 0 ? 10 : Math.floor(value);
+}
+
+export function setPdfWaitMinutes(value: number): void {
+  setPref("autoGeneratePdfWaitMinutes", normalizePdfWaitMinutes(value));
 }
 
 export function setNoteStyle(value: NoteStyle): void {

@@ -5,6 +5,7 @@ pref("providerId", "custom");
 pref("customProtocol", "openai");
 pref("providerProfiles", "{}");
 pref("autoGenerate", false);
+pref("autoGeneratePdfWaitMinutes", 10);
 pref("noteStyle", "cards");
 pref(
   "analysisPrompt",

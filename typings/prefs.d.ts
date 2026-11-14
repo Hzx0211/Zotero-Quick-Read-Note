@@ -14,6 +14,7 @@ declare namespace _ZoteroTypes {
       "customProtocol": string;
       "providerProfiles": string;
       "autoGenerate": boolean;
+      "autoGeneratePdfWaitMinutes": number;
       "noteStyle": string;
       "analysisPrompt": string;
       "researchContext": string;

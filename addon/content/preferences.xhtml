@@ -97,9 +97,26 @@
         >导入文献后自动生成粗读笔记</html:label
       >
     </html:div>
+    <html:div class="quickread-auto">
+      <html:label for="quickread-autoGeneratePdfWaitMinutes"
+        >等待 PDF 附件（分钟）</html:label
+      >
+      <html:input
+        id="quickread-autoGeneratePdfWaitMinutes"
+        type="number"
+        min="0"
+        max="1440"
+        step="1"
+      />
+      <html:small style="opacity: 0.8"
+        >新条目会先等 PDF 到位再生成笔记</html:small
+      >
+    </html:div>
     <html:p class="quickread-help" style="grid-column: 1 / -1; margin: 0 0 8px"
       >仅对开启后新加入的文献生效；会自动调用你配置的
-      API，可能产生费用。</html:p
+      API，可能产生费用。新条目默认最多等待 10 分钟让 PDF
+      附件就位（导入工具常先建条目、后下载 PDF）；到时仍无 PDF
+      时，有摘要则按摘要生成，没有摘要则跳过，可稍后右键手动生成。</html:p
     >
     <html:label class="quickread-field-label" for="quickread-analysisToggle"
       >Analysis Prompt</html:label
