@@ -18,26 +18,61 @@ export function registerItemMenu(win: _ZoteroTypes.MainWindow): void {
     id: "quickreadnote-generate",
     label: "快速添加粗读笔记",
     commandListener: () => {
-      void generate(win);
+      void runGeneration(
+        () => validateSelection(win.ZoteroPane.getSelectedItems()),
+        "正在生成粗读笔记……",
+      );
     },
   });
 }
 
-async function generate(win: _ZoteroTypes.MainWindow): Promise<void> {
+export async function generateImportedItem(
+  item: Zotero.Item,
+): Promise<boolean> {
+  const title = getMetadata(item).title;
+  return runGeneration(
+    () => item,
+    `正在自动生成粗读笔记：${title.slice(0, 32) || "新文献"}……`,
+  );
+}
+
+async function runGeneration(
+  getItem: () => Zotero.Item,
+  initialText: string,
+): Promise<boolean> {
   const progress = new ztoolkit.ProgressWindow(addon.data.config.addonName, {
     closeTime: -1,
   })
-    .createLine({ text: "正在生成粗读笔记……", type: "default" })
+    .createLine({ text: initialText, type: "default" })
     .show();
 
-  let itemID: number | undefined;
   try {
-    const item = validateSelection(win.ZoteroPane.getSelectedItems());
-    itemID = item.id;
-    if (activeItems.has(itemID))
-      throw new Error("这篇文献的笔记正在生成，请稍候。");
-    activeItems.add(itemID);
+    await generateItem(getItem(), (text) => progress.changeLine({ text }));
 
+    progress.changeLine({
+      text: "粗读笔记已生成",
+      type: "success",
+      progress: 100,
+    });
+    progress.startCloseTimer(5000);
+    return true;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    progress.changeLine({ text: message, type: "fail", progress: 100 });
+    progress.startCloseTimer(9000);
+    Zotero.logError(new Error(`Quick Read Note: ${message}`));
+    return false;
+  }
+}
+
+async function generateItem(
+  item: Zotero.Item,
+  onProgress: (text: string) => void,
+): Promise<void> {
+  if (activeItems.has(item.id))
+    throw new Error("这篇文献的笔记正在生成，请稍候。");
+  activeItems.add(item.id);
+  try {
     const settings = getSettings();
     if (!settings.analysisPrompt.trim())
       throw new Error("Analysis Prompt 不能为空。");
@@ -46,25 +81,12 @@ async function generate(win: _ZoteroTypes.MainWindow): Promise<void> {
 
     const metadata = getMetadata(item);
     const paper = await getPaperContent(item, metadata.abstractNote);
-    if (paper.mode === "abstract") {
-      progress.changeLine({ text: "未找到 PDF，正在使用摘要模式……" });
-    }
+    if (paper.mode === "abstract") onProgress("未找到 PDF，正在使用摘要模式……");
     const messages = buildMessages(settings, metadata, paper);
     const markdown = await completeNote(settings, messages);
-    await createChildNote(item, markdown);
-
-    progress.changeLine({
-      text: "粗读笔记已生成",
-      type: "success",
-      progress: 100,
-    });
-    progress.startCloseTimer(5000);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    progress.changeLine({ text: message, type: "fail", progress: 100 });
-    progress.startCloseTimer(9000);
-    Zotero.logError(new Error(`Quick Read Note: ${message}`));
+    if (!addon.data.alive) throw new Error("插件已关闭，未创建笔记。");
+    await createChildNote(item, markdown, settings.noteStyle);
   } finally {
-    if (itemID !== undefined) activeItems.delete(itemID);
+    activeItems.delete(item.id);
   }
 }

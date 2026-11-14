@@ -1,6 +1,10 @@
 import { registerItemMenu } from "./modules/menu";
 import { registerPreferences } from "./modules/preferences";
 import { bindPreferenceInputs } from "./modules/preferences";
+import {
+  registerAutoGeneration,
+  unregisterAutoGeneration,
+} from "./modules/autoGenerate";
 
 async function onStartup() {
   await Promise.all([
@@ -10,6 +14,7 @@ async function onStartup() {
   ]);
 
   await registerPreferences();
+  registerAutoGeneration();
   for (const win of Zotero.getMainWindows()) {
     await onMainWindowLoad(win);
   }
@@ -23,6 +28,7 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow) {
 function onMainWindowUnload(_win: Window) {}
 
 function onShutdown() {
+  unregisterAutoGeneration();
   ztoolkit.unregisterAll();
   addon.data.alive = false;
   // @ts-expect-error The plugin instance is added dynamically by the bootstrap.

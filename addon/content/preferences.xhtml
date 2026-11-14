@@ -4,6 +4,28 @@
   .quickread-grid html\:textarea { width: 100%; box-sizing: border-box; font:
   inherit; } .quickread-grid html\:textarea { min-height: 110px; resize:
   vertical; } .quickread-help { margin: 8px 0 14px; opacity: .8; }
+  .quickread-auto { grid-column: 1 / -1; display: flex; align-items: center;
+  gap: 8px; } .quickread-auto html\:input { width: auto; } .quickread-grid >
+  .quickread-field-label { align-self: center; } .quickread-grid > menulist {
+  width: 100%; min-width: 0; margin: 0; } .quickread-test { grid-column: 1 / -1;
+  display: flex; gap: 10px; align-items: center; } .quickread-test html\:button
+  { font: inherit; } .quickread-field { min-width: 0; } .quickread-field
+  html\:button, .quickread-context-control html\:button,
+  .quickread-context-actions html\:button { font: inherit; }
+  .quickread-context-label { min-width: 0; } .quickread-context-label
+  html\:label, .quickread-context-label html\:small { display: block; }
+  .quickread-context-label html\:small { margin-top: 3px; opacity: .7;
+  line-height: 1.35; } .quickread-context-info { cursor: help; margin-left: 3px;
+  } .quickread-context-info:focus-visible { outline: 1px solid currentColor; }
+  .quickread-context-control, .quickread-context-preview-content { min-width: 0;
+  width: 100%; box-sizing: border-box; } .quickread-context-status { display:
+  block; margin-top: 5px; } .quickread-context-status:empty { display: none; }
+  .quickread-context-preview-row { grid-column: 1 / -1; display: grid;
+  grid-template-columns: 140px minmax(300px, 1fr); gap: 12px; min-width: 0; }
+  .quickread-context-preview-row[hidden] { display: none; }
+  #quickread-contextPreview { display: block; width: 100%; box-sizing:
+  border-box; margin: 0; } .quickread-context-actions { display: flex;
+  justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 </html:style>
 <groupbox
   onload="Zotero.__addonInstance__.hooks.onPrefsEvent('load', { window })"
@@ -14,21 +36,151 @@
     文本发送到配置的 API 地址。</html:p
   >
   <html:div class="quickread-grid">
-    <html:label for="quickread-baseURL">API Base URL</html:label>
+    <html:label class="quickread-field-label" for="quickread-providerId"
+      >API 服务商</html:label
+    >
+    <menulist id="quickread-providerId">
+      <menupopup>
+        <menuitem value="custom" label="自定义" />
+        <menuitem value="openai" label="OpenAI" />
+        <menuitem value="volcengine" label="火山方舟" />
+        <menuitem value="deepseek" label="DeepSeek" />
+        <menuitem value="zhipu" label="智谱" />
+        <menuitem value="kimi" label="Kimi" />
+        <menuitem value="qwen" label="通义千问" />
+        <menuitem value="claude" label="Claude" />
+        <menuitem value="gemini" label="Gemini" />
+      </menupopup>
+    </menulist>
+    <html:label
+      class="quickread-field-label"
+      id="quickread-protocol-label"
+      for="quickread-protocol"
+      >API 协议</html:label
+    >
+    <menulist id="quickread-protocol">
+      <menupopup>
+        <menuitem value="openai" label="OpenAI 兼容" />
+        <menuitem value="claude" label="Claude Messages" />
+        <menuitem value="gemini" label="Gemini GenerateContent" />
+      </menupopup>
+    </menulist>
+    <html:label class="quickread-field-label" for="quickread-baseURL"
+      >API 地址</html:label
+    >
     <html:input
       id="quickread-baseURL"
       type="url"
       placeholder="https://api.openai.com/v1"
     />
-    <html:label for="quickread-apiKey">API Key</html:label>
+    <html:label class="quickread-field-label" for="quickread-apiKey"
+      >API Key</html:label
+    >
     <html:input id="quickread-apiKey" type="password" autocomplete="off" />
-    <html:label for="quickread-model">Model</html:label>
+    <html:label class="quickread-field-label" for="quickread-model"
+      >Model</html:label
+    >
     <html:input id="quickread-model" type="text" placeholder="例如 gpt-5.6" />
-    <html:label for="quickread-analysisPrompt">Analysis Prompt</html:label>
-    <html:textarea id="quickread-analysisPrompt" rows="8"></html:textarea>
-    <html:label for="quickread-researchContext">Research Context</html:label>
+    <html:div class="quickread-test">
+      <html:button id="quickread-testConnection" type="button"
+        >测试连接</html:button
+      >
+      <html:span id="quickread-testStatus" role="status"></html:span>
+    </html:div>
+    <html:p class="quickread-help" style="grid-column: 1 / -1; margin: 0 0 8px"
+      >OpenAI 兼容协议可填写 Base URL 或完整的 /chat/completions
+      地址；测试连接会发送一条简短请求，可能产生少量费用。</html:p
+    >
+    <html:div class="quickread-auto">
+      <html:input id="quickread-autoGenerate" type="checkbox" />
+      <html:label for="quickread-autoGenerate"
+        >导入文献后自动生成粗读笔记</html:label
+      >
+    </html:div>
+    <html:p class="quickread-help" style="grid-column: 1 / -1; margin: 0 0 8px"
+      >仅对开启后新加入的文献生效；会自动调用你配置的
+      API，可能产生费用。</html:p
+    >
+    <html:label class="quickread-field-label" for="quickread-analysisToggle"
+      >Analysis Prompt</html:label
+    >
+    <html:div class="quickread-field">
+      <html:button
+        id="quickread-analysisToggle"
+        type="button"
+        aria-controls="quickread-analysisPanel"
+        aria-expanded="false"
+        >展开并自定义</html:button
+      >
+      <html:div id="quickread-analysisPanel" hidden="hidden">
+        <html:textarea id="quickread-analysisPrompt" rows="8"></html:textarea>
+      </html:div>
+    </html:div>
+    <html:div class="quickread-context-label">
+      <html:label for="quickread-researchContext">Research Context</html:label>
+      <html:small>用于生成个性化粗读笔记</html:small>
+    </html:div>
     <html:textarea id="quickread-researchContext" rows="5"></html:textarea>
+    <html:div class="quickread-context-label">
+      <html:label for="quickread-inferContext">AI 辅助</html:label>
+      <html:small
+        >仅发送文字 · 可能收费<html:span
+          class="quickread-context-info"
+          tabindex="0"
+          role="note"
+          title="最多选择 5 份 PDF、DOCX 或 UTF-8 TXT。插件仅提取文字并发送给当前 API 服务商；原文件不会上传或加入 Zotero。调用模型可能产生费用。"
+          aria-label="最多选择 5 份 PDF、DOCX 或 UTF-8 TXT。插件仅提取文字并发送给当前 API 服务商；原文件不会上传或加入 Zotero。调用模型可能产生费用。"
+          >ⓘ</html:span
+        ></html:small
+      >
+    </html:div>
+    <html:div class="quickread-context-control">
+      <html:button id="quickread-inferContext" type="button"
+        >从文件推断研究领域</html:button
+      >
+      <html:span
+        id="quickread-contextStatus"
+        class="quickread-context-status"
+        role="status"
+      ></html:span>
+    </html:div>
+    <html:div
+      id="quickread-contextPreviewPanel"
+      class="quickread-context-preview-row"
+      hidden="hidden"
+    >
+      <html:div class="quickread-context-label">
+        <html:label for="quickread-contextPreview">推断预览</html:label>
+        <html:small>编辑后应用才替换原内容</html:small>
+      </html:div>
+      <html:div class="quickread-context-preview-content">
+        <html:textarea id="quickread-contextPreview" rows="5"></html:textarea>
+        <html:div class="quickread-context-actions">
+          <html:button id="quickread-applyContext" type="button"
+            >应用到 Research Context</html:button
+          >
+          <html:button id="quickread-cancelContext" type="button"
+            >取消</html:button
+          >
+        </html:div>
+      </html:div>
+    </html:div>
     <html:label for="quickread-noteTemplate">Markdown Note Template</html:label>
     <html:textarea id="quickread-noteTemplate" rows="15"></html:textarea>
+    <html:label class="quickread-field-label" for="quickread-noteStyle"
+      >Note Style</html:label
+    >
+    <menulist id="quickread-noteStyle">
+      <menupopup>
+        <menuitem value="cards" label="Cards" />
+        <menuitem value="classic" label="Classic" />
+        <menuitem value="flow" label="Flow &amp; Tables（流程图）" />
+      </menupopup>
+    </menulist>
+    <html:p class="quickread-help" style="grid-column: 1 / -1; margin: 0"
+      >Cards：将一级标题渲染为信息卡片。Classic：使用标准 Markdown
+      富文本样式。Flow &amp;
+      Tables：按文献内容生成可编辑的流程图和表格。</html:p
+    >
   </html:div>
 </groupbox>

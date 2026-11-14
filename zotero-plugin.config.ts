@@ -7,20 +7,77 @@ const mockChatServer = createServer((request, response) => {
   request.on("data", (chunk) => (body += chunk));
   request.on("end", () => {
     const payload = JSON.parse(body);
-    const valid =
-      request.url === "/v1/chat/completions" &&
-      request.headers.authorization === "Bearer test-key" &&
-      payload.model === "test-model";
-    response.writeHead(valid ? 200 : 400, {
+    const chatPaths = [
+      "/v1/chat/completions",
+      "/api/v3/chat/completions",
+      "/chat/completions",
+      "/api/paas/v4/chat/completions",
+      "/compatible-mode/v1/chat/completions",
+    ];
+    const chat = chatPaths.includes(request.url || "");
+    const claude = request.url === "/v1/messages";
+    const gemini = request.url === "/v1beta/models/test-model:generateContent";
+    const authorized = claude
+      ? request.headers["x-api-key"] === "test-key" &&
+        request.headers["anthropic-version"] === "2023-06-01"
+      : gemini
+        ? request.headers["x-goog-api-key"] === "test-key"
+        : request.headers.authorization === "Bearer test-key";
+    const validBody = claude
+      ? payload.model === "test-model" &&
+        payload.max_tokens > 0 &&
+        Array.isArray(payload.messages)
+      : gemini
+        ? Array.isArray(payload.contents)
+        : payload.model === "test-model" && Array.isArray(payload.messages);
+    const inference = body.includes("科研方向分析助手");
+    const answer = inference
+      ? "我的研究聚焦人机交互与飞行安全，常用访谈和实验方法。"
+      : "# Mock note\n\n**Result**";
+    const status =
+      !chat && !claude && !gemini
+        ? 404
+        : !authorized
+          ? 401
+          : !validBody
+            ? 400
+            : 200;
+    response.writeHead(status, {
       "Content-Type": "application/json",
     });
     response.end(
-      valid
-        ? JSON.stringify({
-            choices: [{ message: { content: "# Mock note\n\n**Result**" } }],
-          })
+      status === 200
+        ? JSON.stringify(
+            claude
+              ? {
+                  content: [{ type: "text", text: answer }],
+                }
+              : gemini
+                ? {
+                    candidates: [
+                      {
+                        content: {
+                          parts: [
+                            { text: "Internal thought", thought: true },
+                            { text: answer },
+                          ],
+                        },
+                      },
+                    ],
+                  }
+                : {
+                    choices: [{ message: { content: answer } }],
+                  },
+          )
         : JSON.stringify({
-            error: { message: "Unexpected Chat Completions request" },
+            error: {
+              message:
+                status === 404
+                  ? `InvalidAction: ${request.url}`
+                  : status === 401
+                    ? "Invalid API Key"
+                    : "Invalid model or request body",
+            },
           }),
     );
   });

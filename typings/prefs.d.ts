@@ -10,6 +10,11 @@ declare namespace _ZoteroTypes {
       "baseURL": string;
       "apiKey": string;
       "model": string;
+      "providerId": string;
+      "customProtocol": string;
+      "providerProfiles": string;
+      "autoGenerate": boolean;
+      "noteStyle": string;
       "analysisPrompt": string;
       "researchContext": string;
       "noteTemplate": string;

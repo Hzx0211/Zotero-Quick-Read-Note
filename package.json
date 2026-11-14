@@ -1,7 +1,7 @@
 {
   "name": "zotero-quick-read-note",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Generate a research quick-read child note from Zotero metadata and indexed PDF text.",
   "repository": {
     "type": "git",

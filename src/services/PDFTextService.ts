@@ -18,7 +18,6 @@ export async function getPaperContent(
   if (!pdf) {
     return { mode: "abstract", text: abstractNote, truncated: false };
   }
-
   try {
     const path = await pdf.getFilePathAsync();
     if (!path) throw new Error("PDF 文件在本机不可用。");
